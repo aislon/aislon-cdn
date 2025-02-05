@@ -1,12 +1,3 @@
-.analytics-link:hover {
-    color: rgb(58, 105, 199);
-  }
-  
-  .analytics-link:hover .analytiscIcon svg path {
-    stroke: rgb(58, 105, 199);
-    transition: stroke 0.2s ease;
-  }
-
 
 
   /** Responsive CSS STUFF**
