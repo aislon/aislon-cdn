@@ -1,0 +1,141 @@
+ // Persistent custom buttons function
+ function createCustomButtons() {
+    // Create custom section container
+    const customSection = document.createElement('div');
+    customSection.id = 'custom-section';
+    customSection.style.marginTop = '8px';
+    customSection.style.marginBottom = '8px';
+    customSection.style.paddingBottom = '8px';
+    customSection.style.width = '100%';
+    customSection.style.display = 'flex';
+
+    // Create navigation container with proper styling
+    const customNav = document.createElement('ul');
+    customNav.className = 'css-kxvohc-SidebarNavList persistent-nav';
+    customNav.style.width = '100%';
+    customNav.style.display = 'flex';
+    customNav.style.gap = '8px';
+    customNav.style.padding = '0 12px';
+    customNav.style.margin = '0';
+    customNav.style.listStyle = 'none';
+
+    // Create Analytics button
+    const analyticsButton = document.createElement('li');
+    analyticsButton.style.flex = '1';
+    analyticsButton.innerHTML = `
+      <a href="${ANALYTICS_URL}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
+        width: 100%;
+        padding: 10px 12px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        color: #000;
+        text-decoration: none;
+        background-color: #f5f5f5;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        height: 100%;
+      ">
+        <span class="e1jeq5dr0 css-5nxuzj-IconWrapper" style="margin-right: 8px;">
+          <img src="/admin/media/analytic.svg" width="24" height="24" />
+        </span>
+        <span style="flex: 1;">Analytics</span>
+      </a>`;
+
+    // Create Site Info button
+    const siteInfoButton = document.createElement('li');
+    siteInfoButton.style.flex = '1';
+    siteInfoButton.innerHTML = `
+      <a href="${SIDE_ID}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
+        width: 100%;
+        padding: 6px 12px;
+        display: flex;
+        align-items: center;
+        font-size: 14px;
+        color: #000;
+        text-decoration: none;
+        background-color: #f5f5f5;
+        border-radius: 6px;
+        transition: all 0.2s ease;
+        height: 100%;
+      ">
+        <span class="e1jeq5dr0 css-5nxuzj-IconWrapper" style="margin-right: 8px;">
+          <img src="/admin/media/info.svg" width="24" height="24" />
+        </span>
+        <span style="flex: 1;">Site Info</span>
+      </a>`;
+
+    // Add hover effects
+    [analyticsButton, siteInfoButton].forEach(button => {
+      const link = button.querySelector('a');
+      link.addEventListener('mouseenter', () => {
+        link.style.backgroundColor = '#e9e9e9';
+      });
+      link.addEventListener('mouseleave', () => {
+        link.style.backgroundColor = '#f5f5f5';
+      });
+    });
+
+    // Assemble section
+    customNav.appendChild(analyticsButton);
+    customNav.appendChild(siteInfoButton);
+    customSection.appendChild(customNav);
+
+    return customSection;
+  }
+
+  // Mutation observer to persistently inject buttons
+  function setupPersistentButtonInjection() {
+    const observer = new MutationObserver((mutations) => {
+      for (const mutation of mutations) {
+        const sidebarNav = document.querySelector('.css-kxvohc-SidebarNavList');
+        
+        // Check if existing persistent nav already exists
+        if (sidebarNav && !document.querySelector('.persistent-nav')) {
+          const customSection = createCustomButtons();
+          sidebarNav.parentNode.insertBefore(customSection, sidebarNav.parentNode.firstChild);
+        }
+      }
+    });
+
+    // Start observing the sidebar
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+  }
+
+  // Avatar replacement script
+  function replaceAvatarIcon() {
+    const observer = new MutationObserver((mutationsList) => {
+      for (const mutation of mutationsList) {
+        const iconWrapper = document.querySelector(".css-16ibyj6-IconWrapper-AvatarPlaceholderIcon-avatarImage");
+        if (iconWrapper) {
+          const img = document.createElement("img");
+          img.src = "media/aislonHat.png";
+          img.width = 22;
+          img.height = 22;
+          img.style.margin = "auto";
+          img.style.display = "block";
+          iconWrapper.style.display = "flex";
+          iconWrapper.style.justifyContent = "center";
+          iconWrapper.style.alignItems = "center";
+          iconWrapper.innerHTML = "";
+          iconWrapper.appendChild(img);
+          observer.disconnect();
+          break;
+        }
+      }
+    });
+
+    observer.observe(document.body, { 
+      childList: true, 
+      subtree: true 
+    });
+  }
+
+  // Initialize on DOM load
+  document.addEventListener("DOMContentLoaded", () => {
+    setupPersistentButtonInjection();
+    replaceAvatarIcon();
+  });
