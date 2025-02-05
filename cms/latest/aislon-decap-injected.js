@@ -46,7 +46,7 @@
     const siteInfoButton = document.createElement('li');
     siteInfoButton.style.flex = '1';
     siteInfoButton.innerHTML = `
-      <a href="${SIDE_ID}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
+      <a href="${SITE_ID}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
         width: 100%;
         padding: 6px 12px;
         display: flex;
