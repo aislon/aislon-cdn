@@ -16,15 +16,18 @@ function createCustomButtons() {
   const siteLink = document.createElement('a');
   siteLink.href = 'https://yoursite.com';
   siteLink.target = '_blank';
-  // Simple text + icon after the text
+  // Show the URL text directly, center it, bigger font
   siteLink.innerHTML = `
-    Visit Site 
-    <img src="/admin/media/open-in-new-tab.svg" width="16" height="16" style="margin-left: 4px; vertical-align: middle;" />
+    https://yoursite.com
+    <img src="/admin/media/open-in-new-tab.svg" width="16" height="16" style="margin-left: 6px; vertical-align: middle;" />
   `;
-  // Minimal styling for a simple link
+  // Center, full width, bigger font
+  siteLink.style.display = 'block';
+  siteLink.style.width = '100%';
+  siteLink.style.textAlign = 'center';
+  siteLink.style.fontSize = '16px';
   siteLink.style.textDecoration = 'none';
   siteLink.style.color = '#000';
-  siteLink.style.fontSize = '14px';
 
   linkContainer.appendChild(siteLink);
 
