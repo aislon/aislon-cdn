@@ -5,7 +5,6 @@
   customSection.id = 'custom-section';
   customSection.style.marginTop = '8px';
   customSection.style.marginBottom = '8px';
-  customSection.style.paddingBottom = '8px';
   customSection.style.width = '100%';
   customSection.style.display = 'flex';
 
@@ -23,7 +22,7 @@
   const analyticsButton = document.createElement('li');
   analyticsButton.style.flex = '1';
   analyticsButton.innerHTML = `
-    <a href="${ANALYTICS_URL}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
+    <a href="${ANALYTICS_URL}" class="custom-nav-link" style="
       width: 100%;
       padding: 10px 12px;
       display: flex;
@@ -35,9 +34,21 @@
       border-radius: 6px;
       transition: all 0.2s ease;
       height: 100%;
+      border: 1px solid #e0e4e8;
+      gap: 8px;
     ">
-      <span class="e1jeq5dr0 css-5nxuzj-IconWrapper" style="margin-right: 8px;">
-        <img src="/admin/media/analytic.svg" width="24" height="24" />
+      <span class="button-icon" style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background-color: #ffffff;
+        border-radius: 4px;
+        border: 1px solid #e0e4e8;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      ">
+        <img src="/admin/media/analytic.svg" width="20" height="20" />
       </span>
       <span style="flex: 1;">Analytics</span>
     </a>`;
@@ -46,9 +57,9 @@
   const siteInfoButton = document.createElement('li');
   siteInfoButton.style.flex = '1';
   siteInfoButton.innerHTML = `
-    <a href="${SITE_ID}" class="css-mt2v94-SidebarNavLink-sidebarNavLinkActive-SidebarNavLink" style="
+    <a href="${SITE_ID}" class="custom-nav-link" style="
       width: 100%;
-      padding: 6px 12px;
+      padding: 10px 12px;
       display: flex;
       align-items: center;
       font-size: 14px;
@@ -58,9 +69,21 @@
       border-radius: 6px;
       transition: all 0.2s ease;
       height: 100%;
+      border: 1px solid #e0e4e8;
+      gap: 8px;
     ">
-      <span class="e1jeq5dr0 css-5nxuzj-IconWrapper" style="margin-right: 8px;">
-        <img src="/admin/media/info.svg" width="24" height="24" />
+      <span class="button-icon" style="
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        width: 32px;
+        height: 32px;
+        background-color: #ffffff;
+        border-radius: 4px;
+        border: 1px solid #e0e4e8;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+      ">
+        <img src="/admin/media/info.svg" width="20" height="20" />
       </span>
       <span style="flex: 1;">Site Info</span>
     </a>`;
