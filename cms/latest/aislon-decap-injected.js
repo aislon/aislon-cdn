@@ -27,7 +27,7 @@ function createCustomButtons() {
   // Display the URL text directly, bigger font, centered, icon after text
   siteLink.innerHTML = `
     ${siteUrl}
-    <img src="/admin/media/open-in-new-tab.svg" width="16" height="16" style="margin-left: 6px; vertical-align: middle;" />
+    <img src="https://cms.aislon.com/cms/latest/newTab.svg" width="16" height="16" style="margin-left: 6px; vertical-align: middle;" />
   `;
   // Center, full width, bigger font
   siteLink.style.display = 'block';
