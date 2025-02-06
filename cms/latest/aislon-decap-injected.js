@@ -1,7 +1,9 @@
-// Get the base domain of the current page
-function getSiteBaseDomain() {
-  // window.location.origin returns protocol + host (e.g. https://example.com)
-  return window.location.origin;
+// Get just the domain part of the current page (no http/https)
+function getSiteDomainOnly() {
+  // window.location.origin returns something like "https://example.com"
+  const fullOrigin = window.location.origin;
+  // Remove http:// or https:// from the front
+  return fullOrigin.replace(/^https?:\/\//, '');
 }
 
 // Persistent custom buttons function
@@ -17,25 +19,29 @@ function createCustomButtons() {
 
   // 1) Create a simple link container (on top)
   const linkContainer = document.createElement('div');
-  linkContainer.style.marginBottom = '8px'; // add spacing below the link
+  // Increase spacing below the link
+  linkContainer.style.marginBottom = '16px'; // more margin
 
-  const siteUrl = getSiteBaseDomain();
+  const domainOnly = getSiteDomainOnly();
 
   const siteLink = document.createElement('a');
-  siteLink.href = siteUrl;
+  // Still open in a new tab, but the actual HREF includes the full origin
+  // so it properly opens the site if needed:
+  siteLink.href = window.location.origin;
   siteLink.target = '_blank';
-  // Display the URL text directly, bigger font, centered, icon after text
-  siteLink.innerHTML = `
-    ${siteUrl}
-    <img src="https://cdn.aislon.com/cms/latest/newTab.svg" width="16" height="16" style="margin-left: 6px; vertical-align: middle;" />
-  `;
+
+  // Just the domain text, bigger font, no icon
+  siteLink.innerText = domainOnly;
+
   // Center, full width, bigger font
   siteLink.style.display = 'block';
   siteLink.style.width = '100%';
   siteLink.style.textAlign = 'center';
-  siteLink.style.fontSize = '16px';
+  siteLink.style.fontSize = '20px'; // bigger
   siteLink.style.textDecoration = 'none';
   siteLink.style.color = '#000';
+  // Add a bit of bottom padding too, if desired
+  siteLink.style.paddingBottom = '8px';
 
   linkContainer.appendChild(siteLink);
 
