@@ -1,3 +1,9 @@
+// Get the base domain of the current page
+function getSiteBaseDomain() {
+  // window.location.origin returns protocol + host (e.g. https://example.com)
+  return window.location.origin;
+}
+
 // Persistent custom buttons function
 function createCustomButtons() {
   // Create custom section container
@@ -7,18 +13,20 @@ function createCustomButtons() {
   customSection.style.marginBottom = '8px';
   customSection.style.width = '100%';
   customSection.style.display = 'flex';
-  customSection.style.flexDirection = 'column'; // allow vertical stacking
+  customSection.style.flexDirection = 'column'; // vertical stacking
 
   // 1) Create a simple link container (on top)
   const linkContainer = document.createElement('div');
-  linkContainer.style.marginBottom = '8px';
+  linkContainer.style.marginBottom = '8px'; // add spacing below the link
+
+  const siteUrl = getSiteBaseDomain();
 
   const siteLink = document.createElement('a');
-  siteLink.href = 'https://yoursite.com';
+  siteLink.href = siteUrl;
   siteLink.target = '_blank';
-  // Show the URL text directly, center it, bigger font
+  // Display the URL text directly, bigger font, centered, icon after text
   siteLink.innerHTML = `
-    https://yoursite.com
+    ${siteUrl}
     <img src="/admin/media/open-in-new-tab.svg" width="16" height="16" style="margin-left: 6px; vertical-align: middle;" />
   `;
   // Center, full width, bigger font
@@ -107,12 +115,10 @@ function createCustomButtons() {
   });
 
   // Assemble everything
-  // (1) The simple link goes on top
-  customSection.appendChild(linkContainer);
-  // (2) Then the two buttons
+  customSection.appendChild(linkContainer); // (1) Link on top
   customNav.appendChild(analyticsButton);
   customNav.appendChild(siteInfoButton);
-  customSection.appendChild(customNav);
+  customSection.appendChild(customNav);     // (2) Buttons below
 
   return customSection;
 }
