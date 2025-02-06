@@ -67,7 +67,7 @@
       <span class="button-icon" style="${sharedIconStyle}">
         <img src="/admin/media/info.svg" width="20" height="20" />
       </span>
-      <span style="flex: 1;">Information</span>
+      <span style="flex: 1;">Info</span>
     </a>`;
 
   // Add hover effects
