@@ -7,8 +7,28 @@ function createCustomButtons() {
   customSection.style.marginBottom = '8px';
   customSection.style.width = '100%';
   customSection.style.display = 'flex';
+  customSection.style.flexDirection = 'column'; // allow vertical stacking
 
-  // Create navigation container with proper styling
+  // 1) Create a simple link container (on top)
+  const linkContainer = document.createElement('div');
+  linkContainer.style.marginBottom = '8px';
+
+  const siteLink = document.createElement('a');
+  siteLink.href = 'https://yoursite.com';
+  siteLink.target = '_blank';
+  // Simple text + icon after the text
+  siteLink.innerHTML = `
+    Visit Site 
+    <img src="/admin/media/open-in-new-tab.svg" width="16" height="16" style="margin-left: 4px; vertical-align: middle;" />
+  `;
+  // Minimal styling for a simple link
+  siteLink.style.textDecoration = 'none';
+  siteLink.style.color = '#000';
+  siteLink.style.fontSize = '14px';
+
+  linkContainer.appendChild(siteLink);
+
+  // 2) Create navigation container for the two buttons
   const customNav = document.createElement('ul');
   customNav.className = 'css-kxvohc-SidebarNavList persistent-nav';
   customNav.style.width = '100%';
@@ -48,20 +68,7 @@ function createCustomButtons() {
     box-shadow: 0 2px 4px rgba(0,0,0,0.06);
   `;
 
-  // 1) Create the "Open in new tab" link (above the other two)
-  const websiteLink = document.createElement('li');
-  websiteLink.style.flex = '1';
-  websiteLink.innerHTML = `
-    <a href="https://yoursite.com" target="_blank" class="custom-nav-link" style="${sharedButtonStyle}">
-      <span class="button-icon" style="${sharedIconStyle}">
-        <!-- Replace with your own open-in-new-tab icon path -->
-        <img src="/admin/media/open-in-new-tab.svg" width="20" height="20" />
-      </span>
-      <span style="flex: 1;">Visit Site</span>
-    </a>
-  `;
-
-  // 2) Create Analytics button
+  // Create Analytics button
   const analyticsButton = document.createElement('li');
   analyticsButton.style.flex = '1';
   analyticsButton.innerHTML = `
@@ -73,7 +80,7 @@ function createCustomButtons() {
     </a>
   `;
 
-  // 3) Create Site Info button
+  // Create Site Info button
   const siteInfoButton = document.createElement('li');
   siteInfoButton.style.flex = '1';
   siteInfoButton.innerHTML = `
@@ -85,8 +92,8 @@ function createCustomButtons() {
     </a>
   `;
 
-  // Add hover effects to all three links
-  [websiteLink, analyticsButton, siteInfoButton].forEach(item => {
+  // Add hover effects to the two buttons
+  [analyticsButton, siteInfoButton].forEach(item => {
     const link = item.querySelector('a');
     link.addEventListener('mouseenter', () => {
       link.style.backgroundColor = '#e9e9e9';
@@ -96,8 +103,10 @@ function createCustomButtons() {
     });
   });
 
-  // Assemble the new section with the website link on top
-  customNav.appendChild(websiteLink);
+  // Assemble everything
+  // (1) The simple link goes on top
+  customSection.appendChild(linkContainer);
+  // (2) Then the two buttons
   customNav.appendChild(analyticsButton);
   customNav.appendChild(siteInfoButton);
   customSection.appendChild(customNav);
