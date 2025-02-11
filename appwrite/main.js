@@ -3,38 +3,7 @@
 
 let isUserAuthenticated = false;
 
-// CONFIGURATION
-const client = new Appwrite.Client()
-.setEndpoint('https://cloud.appwrite.io/v1')
-.setProject('aislon');
-const PROJECT_DOMAIN = 'https://aislon.com'
-const PROJECT_NAME = 'Aislon';
-const SETUP_REQUIRED = false; // not done 
-const FULL_LOADING_SCREEN = false;
-
-// Path Configuration
-const AUTH_CHECK_COMPLETE = false; // Tracks if initial auth check is done
-const AUTH_REQUIRED_PATHS = [
-    '/dashboard',
-    '/dashboard.html',
-    '/profile',
-    '/profile.html',
-    '/settings',
-    '/settings.html',
-    '/portal/index.html',
-];
-const NO_AUTH_PATHS = [
-    '/auth',
-    '/auth.html',
-    '/login',
-    '/login.html',
-    '/register',
-    '/register.html',
-    '/index.html',
-    '/portal/auth.html'
-];
-const DEFAULT_AUTH_PAGE = '/portal/index.html';
-const DEFAULT_UNAUTH_PAGE = '/portal/auth.html';
+////////////////////////// CONFIGURATION FILE ////////////////////
 
 // Path checking utilities
 function getCurrentPath() {
