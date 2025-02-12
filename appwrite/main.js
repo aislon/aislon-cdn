@@ -294,7 +294,7 @@ async function authAccountEmailOTP() {
         });
         // Hide email input and show OTP input field
         document.getElementById('emailOtpContainer-Email').style.display = 'none';
-        document.getElementById('firstStepAuth').style.display = 'none';
+        //document.getElementById('firstStepAuth').style.display = 'none';
         document.getElementById('emailOtpContainer-Otp').style.display = 'block';
         document.getElementById('otpInput').focus();
 
