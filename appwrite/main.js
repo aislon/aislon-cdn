@@ -749,22 +749,3 @@ function confirmPasswordRecovery() {
         }
 }
 
-
-
-
-
-
-
-
-//////////////////////////////////////////////////////////
-/**
- * 
- * USER SETTINGS
- * 
- * 
- */
-
-
-
-
-// Email Settings

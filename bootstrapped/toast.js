@@ -100,7 +100,7 @@ const TOAST_CONFIG = {
                 iconEl.classList.add('rotatingIcon');
             }
         } else {
-            iconEl.style.display = 'none';
+                        iconEl.style.display = 'none !important';
         }
     }
     if (headingEl) headingEl.textContent = heading;
