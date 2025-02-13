@@ -92,11 +92,16 @@ const TOAST_CONFIG = {
     const headingEl = toast.querySelector(TOAST_CONFIG.SELECTORS.HEADING);
     const descEl = toast.querySelector(TOAST_CONFIG.SELECTORS.DESCRIPTION);
   
-    if (iconEl && iconSrc) {
-      iconEl.src = iconSrc;
-      if (iconSrc === TOAST_CONFIG.ICONS.LOADING) {
-        iconEl.classList.add('rotatingIcon');
-      }
+    if (iconEl) {
+        if (iconSrc) {
+            iconEl.src = iconSrc;
+            iconEl.style.display = 'inline';
+            if (iconSrc === TOAST_CONFIG.ICONS.LOADING) {
+                iconEl.classList.add('rotatingIcon');
+            }
+        } else {
+            iconEl.style.display = 'none';
+        }
     }
     if (headingEl) headingEl.textContent = heading;
     if (descEl) descEl.textContent = message;
