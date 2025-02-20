@@ -258,7 +258,6 @@ async function authAccountEmailOTP() {
         showToast({
             heading: 'Email is required',
             message: 'Please enter a valid email address.',
-            iconSrc: '/icons/toast/redError.svg',
             duration: 2500
         });
         document.getElementById('authEmailOTP-EmailInput').focus();
