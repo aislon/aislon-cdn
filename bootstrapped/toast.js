@@ -33,9 +33,9 @@ const TOAST_CONFIG = {
         LOADING: 'loading'
     },
     ICONS: {
-        success: 'icons/toast/greenSuccess.svg',
-        error: 'icons/toast/redError.svg',
-        loading: 'icons/toast/loadingSpinner.svg'
+        success: 'https://cdn.aislon.com/bootstrapped/media/success.svg',
+        error: 'https://cdn.aislon.com/bootstrapped/media/error.svg',
+        loading: 'https://cdn.aislon.com/bootstrapped/media/loadingSpinner.svg'
     },
     SELECTORS: {
         CONTAINER: '#toastContainer',
