@@ -749,3 +749,19 @@ function confirmPasswordRecovery() {
         }
 }
 
+
+
+function resetAllAppwriteState() {
+
+
+
+    let navBarState = document.getElementById('navbarNav');
+    sessionStorage.clear();
+
+
+    
+    window.location.reload();
+
+
+
+}
