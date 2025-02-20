@@ -258,7 +258,8 @@ async function authAccountEmailOTP() {
         showToast({
             heading: 'Email is required',
             message: 'Please enter a valid email address.',
-            duration: 2500
+            duration: 2500,
+            type: 'error'
         });
         document.getElementById('authEmailOTP-EmailInput').focus();
         return;
@@ -269,7 +270,7 @@ async function authAccountEmailOTP() {
         showToast({
             heading: 'Invalid Email',
             message: 'Please enter a valid email address.',
-            iconSrc: '/icons/toast/redError.svg',
+            type: 'error',
             duration: 2000
         });
         document.getElementById('authEmailOTP-EmailInput').focus();
@@ -288,7 +289,6 @@ async function authAccountEmailOTP() {
         showToast({
             heading: 'Email Sent',
             message: 'An OTP has been sent to your email.',
-            iconSrc: '/icons/toast/greenSuccess.svg',
             duration: 3000
         });
         // Hide email input and show OTP input field
@@ -321,8 +321,8 @@ async function authAccountEmailOTP() {
         showToast({
             heading: 'Error',
             message: 'Failed to send OTP. Please try again.',
-            iconSrc: '/assets/img/bootstrapped/toast/redError.svg',
-            duration: 3000
+            duration: 3000,
+            type: 'error'
         });
     }
 
@@ -332,7 +332,6 @@ async function authAccountEmailOTP() {
         if(!otpCode){
             showToast({
                 heading: 'Code is required',
-                iconSrc: '/assets/img/bootstrapped/toast/redError.svg',
                 duration: 2000
             });
             document.getElementById('otpInput').focus();
@@ -351,8 +350,8 @@ async function authAccountEmailOTP() {
             showToast({
                 heading: error.message,
                 //message: 'Incorrect OTP. Please try again.',
-                iconSrc: '/assets/img/bootstrapped/toast/redError.svg',
-                duration: 3000
+                duration: 3000,
+            type: 'error'
             });
 
             // Clear OTP input field
@@ -697,7 +696,7 @@ async function resetPasswordRequest(emailInput) {
             PROJECT_DOMAIN + '/auth/api/reset-password.html'
         );
         console.log(result);
-        showToast({ heading: 'Recovery email sent.', message: 'Check your email to reset your password.', iconSrc: '/bootstrapped/toast/greenSuccess.svg', duration: 5500 });
+        showToast({ heading: 'Recovery email sent.', message: 'Check your email to reset your password.', type: 'success', duration: 5500 });
         await delay(1000);
 
         const resetPasswordModalHeader = document.getElementById('inputRequestTitle');
@@ -711,7 +710,7 @@ async function resetPasswordRequest(emailInput) {
             resetPasswordModalButton.innerText = 'Email Sent';
         }
     } catch (error) {
-        showToast({ heading: 'Recovery email failed.', message: error.message, duration: 3000 });
+        showToast({ heading: 'Recovery email failed.', message: error.message, duration: 3000, type: 'error' });
         await delay(4000);
         window.location.href = '/';
     }
@@ -734,11 +733,11 @@ function confirmPasswordRecovery() {
                         passwordInput.value // password
                     );
                     console.log(result);
-                    showToast({ heading: 'Password Changed', message: 'Successfully changed the account password', iconSrc: '/assets/img/bootstrapped/toast/greenSuccess.svg', duration: 3000 });
+                    showToast({ heading: 'Password Changed', message: 'Successfully changed the account password', duration: 3000, type: 'success' });
                     // Handle success (e.g., redirect to a success page or show a success message)
                 } catch (error) {
                     console.error('Error verifying account:', error);
-                    showToast({ heading: 'Password Change Failed', message: error.message, iconSrc: '/assets/img/bootstrapped/toast/redError.svg', duration: 3000 });
+                    showToast({ heading: 'Password Change Failed', message: error.message, duration: 3000, type: 'error' });
                     // Handle error (e.g., show an error message)
                 }
             })();
