@@ -84,7 +84,7 @@ async function checkUser() {
         updateUI(); // Always update UI
     }
 }
-checkUser();
+// checkUser();
 
 
 
