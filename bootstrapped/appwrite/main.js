@@ -5,7 +5,6 @@ let isUserAuthenticated = false;
 
 ////////////////////////// CONFIGURATION FILE ////////////////////
 
-// Path checking utilities
 function getCurrentPath() {
     return window.location.pathname;
 }
@@ -14,20 +13,40 @@ function shouldRedirect() {
     const currentPath = getCurrentPath();
     
     if (isUserAuthenticated) {
-        // More precise path matching
+        // Check NO_AUTH_PATHS - these should redirect authenticated users
         if (NO_AUTH_PATHS.some(path => currentPath === path || currentPath.endsWith(path))) {
             console.log('Redirecting authenticated user from:', currentPath);
-            window.location.href = DEFAULT_AUTH_PAGE;
-            return true;
+            return DEFAULT_AUTH_PAGE;
         }
     } else {
+        // Check AUTH_REQUIRED_PATHS - these should redirect unauthenticated users
         if (AUTH_REQUIRED_PATHS.some(path => currentPath === path || currentPath.endsWith(path))) {
-            window.location.href = DEFAULT_UNAUTH_PAGE;
-            return true;
+            console.log('Redirecting unauthenticated user from:', currentPath);
+            return DEFAULT_UNAUTH_PAGE;
         }
     }
-    return false;
+    return null; // No redirect needed
 }
+
+// Handle regular navigation redirects
+function handleNavigation() {
+    const redirectTo = shouldRedirect();
+    if (redirectTo) {
+        window.location.href = redirectTo;
+    }
+}
+
+// Set up HTMX path change listener
+document.addEventListener('htmx:afterSettle', function(evt) {
+    const redirectTo = shouldRedirect();
+    if (redirectTo) {
+        // Use HTMX to handle the redirect
+        htmx.ajax('GET', redirectTo, {target: 'body'});
+    }
+});
+
+// Initial check on page load
+handleNavigation();
 
 const databases = new Appwrite.Databases(client);
 const account = new Appwrite.Account(client);
