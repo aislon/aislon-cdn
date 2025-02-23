@@ -1,63 +1,14 @@
-// Appwrite Bootstrapped Script
-// v0.4.1
+/**
+ * Authentication Module for Appwrite
+ * Handles OAuth, Email/Password, and Email OTP authentication methods
+ * @module Authentication
+ */
 
+
+// Core state
 let isUserAuthenticated = false;
-
-////////////////////////// CONFIGURATION FILE ////////////////////
-
-function getCurrentPath() {
-    return window.location.pathname;
-}
-
-function shouldRedirect() {
-    const currentPath = getCurrentPath();
-    
-    if (isUserAuthenticated) {
-        // Check NO_AUTH_PATHS - these should redirect authenticated users
-        if (NO_AUTH_PATHS.some(path => currentPath === path || currentPath.endsWith(path))) {
-            console.log('Redirecting authenticated user from:', currentPath);
-            return DEFAULT_AUTH_PAGE;
-        }
-    } else {
-        // Check AUTH_REQUIRED_PATHS - these should redirect unauthenticated users
-        if (AUTH_REQUIRED_PATHS.some(path => currentPath === path || currentPath.endsWith(path))) {
-            console.log('Redirecting unauthenticated user from:', currentPath);
-            return DEFAULT_UNAUTH_PAGE;
-        }
-    }
-    return null; // No redirect needed
-}
-
-// Handle regular navigation redirects
-function handleNavigation() {
-    const redirectTo = shouldRedirect();
-    if (redirectTo) {
-        window.location.href = redirectTo;
-    }
-}
-
-// Set up HTMX path change listener
-document.addEventListener('htmx:afterSettle', function(evt) {
-    const redirectTo = shouldRedirect();
-    if (redirectTo) {
-        // Use HTMX to handle the redirect
-        htmx.ajax('GET', redirectTo, {target: 'body'});
-    }
-});
-
-// Initial check on page load
-handleNavigation();
-
-const databases = new Appwrite.Databases(client);
-const account = new Appwrite.Account(client);
-const storage = new Appwrite.Storage(client);
-const functions = new Appwrite.Functions(client);
-const locale = new Appwrite.Locale(client);
-const teams = new Appwrite.Teams(client);
-const avatars = new Appwrite.Avatars(client);
-
-let userDocument;
-
+let navigationInProgress = false;
+let userDocument = null;
 
 
 /**
@@ -71,7 +22,12 @@ async function checkUser() {
         const accountResponse = await account.get();
         isUserAuthenticated = true; // Set auth state if account.get() succeeds
         console.log('USER AUTHENTICATED')
-        shouldRedirect();
+        
+        AUTH_CHECK_COMPLETE = true;
+        // Handle redirection immediately after authentication state change
+        if (handleNavigation()) {
+            return null; // Exit if redirect happens
+        }
         
         const storedData = JSON.parse(sessionStorage.getItem('userData'));
         
@@ -113,6 +69,13 @@ async function checkUser() {
     } catch (error) {
         isUserAuthenticated = false; // Reset auth state on error
         sessionStorage.removeItem('userData');
+        
+        AUTH_CHECK_COMPLETE = true;
+        // Handle redirection for unauthenticated state
+        if (handleNavigation()) {
+            return null;
+        }
+        
         if (error.response?.code === 401) {
             //showToast({ message: 'No User Logged In' });
 
@@ -125,12 +88,64 @@ async function checkUser() {
         return null;
     } finally {
         updateUI(); // Always update UI
-        if (FULL_LOADING_SCREEN) {
-            document.getElementById('loadingDiv').setAttribute('style', 'display: none !important;');
-        }
     }
 }
 checkUser();
+
+
+
+
+// Constants
+const AUTH_TOAST_DURATION = 3000;
+const AUTH_REDIRECT_DELAY = 1500;
+
+// DOM Elements Cache
+const DOM = {
+    emailOTP: {
+        field: document.getElementById('authEmailOTP-EmailInput'),
+        button: document.getElementById('emailOtpButton'),
+        container: {
+            email: document.getElementById('emailOtpContainer-Email'),
+            otp: document.getElementById('emailOtpContainer-Otp')
+        },
+        preview: document.getElementById('otpEmailPreviewText'),
+        input: document.getElementById('otpInput'),
+        confirmButton: document.getElementById('emailOtpConfirmButton')
+    },
+    emailPassword: {
+        signUp: document.getElementById('authPasswordSignUp'),
+        logIn: document.getElementById('authPasswordLogIn'),
+        createForm: {
+            email: document.getElementById('createEmailPassword-EmailInput'),
+            password: document.getElementById('createEmailPassword-PasswordInput'),
+            passwordContainer: document.getElementById('createEmailPassword-PasswordContainer'),
+            button: document.getElementById('createEmailPassAuthButton')
+        },
+        loginForm: {
+            email: document.getElementById('authEmailPassword-EmailInput'),
+            password: document.getElementById('authEmailPassword-PasswordInput'),
+            passwordContainer: document.getElementById('authEmailPassword-PasswordContainer'),
+            button: document.querySelector('#authPasswordLogIn button.btn-primary')
+        }
+    },
+    recovery: {
+        modal: {
+            header: document.getElementById('inputRequestTitle'),
+            description: document.getElementById('inputRequestDescription'),
+            button: document.getElementById('inputRequestButton')
+        },
+        password: document.getElementById('password')
+    },
+    verification: {
+        title: document.getElementById('emailVerificationTitle'),
+        body: document.getElementById('emailVerificationBody')
+    }
+};
+
+// Utility Functions
+const validateEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+const delay = ms => new Promise(resolve => setTimeout(resolve, ms));
+
 
 
 /**
@@ -187,7 +202,7 @@ function updateUI() {
         // Handle avatar
         if (userDocument.userFullName || userDocument.email) {
             const avatarName = userDocument.userFullName || userDocument.email;
-            const result = avatars.getInitials(avatarName, 80, 80, '3b3b3b');
+            const result = avatars.getInitials(avatarName, 80, 80, AVATAR_BACKGROUND_COLOR);
             
             const avatarElements = document.getElementsByClassName('user-avatar');
             Array.from(avatarElements).forEach(element => {
@@ -198,24 +213,125 @@ function updateUI() {
 }
 
 
+
+
 /**
- * Signs in with an OAuth provider.
- * 
+ * OAuth Authentication
  */
 async function oAuth(authProvider, scopes = []) {
     try {
-        account.createOAuth2Session(
-            authProvider, // provider
-            PROJECT_DOMAIN + '?authWith='+authProvider, // success (optional)
-            PROJECT_DOMAIN + '/auth/api/error.html', // failure (optional)
-            scopes // scopes (optional)
+        await account.createOAuth2Session(
+            authProvider,
+            `${PROJECT_DOMAIN}?authWith=${authProvider}`,
+            `${PROJECT_DOMAIN}/auth/api/error.html`,
+            scopes
         );
-
     } catch (error) {
-        console.error(`${authProvider} Authentication Error: ${error.message}`);
-        showToast({ title: `${authProvider} Authentication Error`, message: error.message});
+        console.error(`${authProvider} Authentication Error:`, error);
+        showToast({ 
+            heading: `${authProvider} Authentication Error`, 
+            message: error.message,
+            type: 'error'
+        });
+    }
+}
+
+/**
+ * Logout Handler
+ */
+async function logout() {
+    showLoadingToast('logOutToast', {
+        loadingHeading: 'Closing Session..',
+        loadingMessage: 'Removing the current session.'
+    });
+
+    try {
+        sessionStorage.clear();
+        await account.deleteSession('current');
+        updateLoadingToast('logOutToast', 'success', {
+            heading: 'Logged Out Successfully',
+            message: 'The current session has been closed.'
+        });
+    } catch (error) {
+        updateLoadingToast('logOutToast', 'error', {
+            heading: 'Something Went Wrong',
+            message: 'Session could not be closed.'
+        });
+        throw error;
+    } finally {
+        const signOutModal = bootstrap.Modal.getInstance(document.getElementById('logOutModal'));
+        if (signOutModal) signOutModal.hide();
+        setTimeout(() => window.location.reload(), AUTH_REDIRECT_DELAY);
+    }
+}
+
+/**
+ * Email OTP Authentication
+ */
+if (DOM.emailOTP.field) {
+    DOM.emailOTP.field.addEventListener('keydown', e => {
+        if (e.key === 'Enter') authAccountEmailOTP();
+    });
+}
+
+async function authAccountEmailOTP() {
+    const email = DOM.emailOTP.field.value;
+    DOM.emailOTP.preview.innerText = email;
+
+    if (!email || !validateEmail(email)) {
+        showToast({
+            heading: !email ? 'Email is required' : 'Invalid Email',
+            message: 'Please enter a valid email address.',
+            type: 'error',
+            duration: AUTH_TOAST_DURATION
+        });
+        DOM.emailOTP.field.focus();
+        return;
     }
 
+    try {
+        DOM.emailOTP.button.disabled = true;
+        const result = await account.createEmailToken(
+            Appwrite.ID.unique(),
+            email,
+            false
+        );
+
+        showToast({
+            heading: 'Email Sent',
+            message: 'An OTP has been sent to your email.',
+            duration: AUTH_TOAST_DURATION
+        });
+
+        // Switch to OTP input view
+        DOM.emailOTP.container.email.style.display = 'none';
+        DOM.emailOTP.container.otp.style.display = 'block';
+        DOM.emailOTP.input.value = '';
+        DOM.emailOTP.input.focus();
+
+        // Setup OTP submission listeners
+        const handleOTPSubmit = () => {
+            if (DOM.emailOTP.input.value.length === 6) {
+                createSessionFromOTP(result.userId, DOM.emailOTP.input.value);
+            }
+        };
+
+        DOM.emailOTP.input.addEventListener('keydown', e => {
+            if (e.key === 'Enter') handleOTPSubmit();
+        });
+
+        DOM.emailOTP.confirmButton.addEventListener('click', handleOTPSubmit);
+
+    } catch (error) {
+        DOM.emailOTP.button.disabled = false;
+        console.error('Error sending OTP:', error);
+        showToast({
+            heading: 'Error',
+            message: 'Failed to send OTP. Please try again.',
+            type: 'error',
+            duration: AUTH_TOAST_DURATION
+        });
+    }
 }
 
 /**
@@ -532,26 +648,8 @@ if (createEmailPassAuthButton) {
     createEmailPassAuthButton.addEventListener('click', createEmailPassAuth);
 }
 
-///////////////////////////////////////////////////
 
-document.addEventListener('DOMContentLoaded', () => {
-    toggleAuthDisplay(new URLSearchParams(window.location.search).get('auth'));
-});
 
-function toggleAuthDisplay(auth) {
-    const signUp = document.getElementById('authPasswordSignUp');
-    const logIn = document.getElementById('authPasswordLogIn');
-    if (signUp && logIn) {
-        [signUp.style.display, logIn.style.display] = auth === 'signup' ? ['block', 'none'] : ['none', 'block'];
-    }
-}
-
-function switchAuthPasswordType() {
-    const signUp = document.getElementById('authPasswordSignUp');
-    if (signUp) {
-        toggleAuthDisplay(signUp.style.display === 'none' ? 'signup' : 'login');
-    }
-}
 
 function validateEmailAndShowPasswordForLogin() {
     const emailInput = document.getElementById('authEmailPassword-EmailInput');
@@ -766,19 +864,325 @@ function confirmPasswordRecovery() {
         }
 }
 
+/**
+ * Email/Password Authentication Module
+ */
 
+// Initialize auth display on page load
+document.addEventListener('DOMContentLoaded', () => {
+    const authParam = new URLSearchParams(window.location.search).get('auth');
+    toggleAuthDisplay(authParam);
+});
 
-function resetAllAppwriteState() {
+// Auth Form Event Listeners
+if (DOM.emailPassword.createForm.email) {
+    DOM.emailPassword.createForm.email.addEventListener('keypress', e => {
+        if (e.key === 'Enter') validateEmailAndShowPassword();
+    });
+}
 
+if (DOM.emailPassword.createForm.password) {
+    DOM.emailPassword.createForm.password.addEventListener('keypress', e => {
+        if (e.key === 'Enter') createEmailPassAuth();
+    });
+}
 
+if (DOM.emailPassword.createForm.button) {
+    DOM.emailPassword.createForm.button.addEventListener('click', createEmailPassAuth);
+}
 
-    let navBarState = document.getElementById('navbarNav');
-    sessionStorage.clear();
+if (DOM.emailPassword.loginForm.email) {
+    DOM.emailPassword.loginForm.email.addEventListener('keypress', e => {
+        if (e.key === 'Enter') validateEmailAndShowPasswordForLogin();
+    });
+}
 
+if (DOM.emailPassword.loginForm.password) {
+    DOM.emailPassword.loginForm.password.addEventListener('keypress', e => {
+        if (e.key === 'Enter') authEmailPassword();
+    });
+}
 
+if (DOM.emailPassword.loginForm.button) {
+    DOM.emailPassword.loginForm.button.addEventListener('click', authEmailPassword);
+}
+
+/**
+ * Toggles between signup and login forms
+ */
+function toggleAuthDisplay(auth) {
+    if (!DOM.emailPassword.signUp || !DOM.emailPassword.logIn) return;
     
-    window.location.reload();
+    [DOM.emailPassword.signUp.style.display, DOM.emailPassword.logIn.style.display] = 
+        auth === 'signup' ? ['block', 'none'] : ['none', 'block'];
+}
+
+function switchAuthPasswordType() {
+    if (!DOM.emailPassword.signUp) return;
+    toggleAuthDisplay(DOM.emailPassword.signUp.style.display === 'none' ? 'signup' : 'login');
+}
+
+/**
+ * Shows password form after email validation
+ */
+function validateEmailAndShowPassword(isLogin = false) {
+    const emailInput = isLogin ? DOM.emailPassword.loginForm.email : DOM.emailPassword.createForm.email;
+    const passwordContainer = isLogin ? DOM.emailPassword.loginForm.passwordContainer : DOM.emailPassword.createForm.passwordContainer;
+    const passwordInput = isLogin ? DOM.emailPassword.loginForm.password : DOM.emailPassword.createForm.password;
+    
+    if (!emailInput) return false;
+
+    const email = emailInput.value.trim();
+    
+    if (!email || !validateEmail(email)) {
+        showToast({
+            heading: 'Validation Failed',
+            message: !email ? 'Email is required.' : 'Please enter a valid email address.',
+            duration: AUTH_TOAST_DURATION
+        });
+        emailInput.focus();
+        return false;
+    }
+
+    if (passwordContainer) {
+        passwordContainer.style.display = 'block';
+        passwordInput?.focus();
+    }
+    return true;
+}
+
+/**
+ * Creates new account with email/password
+ */
+async function createEmailPassAuth() {
+    const email = DOM.emailPassword.createForm.email?.value.trim();
+    const password = DOM.emailPassword.createForm.password?.value;
+
+    if (!validateEmailAndShowPassword()) return;
+    if (!password) {
+        DOM.emailPassword.createForm.passwordContainer.style.display = 'block';
+        DOM.emailPassword.createForm.password?.focus();
+        return;
+    }
+
+    showLoadingToast('createAccountEmailPassword', {
+        loadingHeading: 'Creating Account..',
+        loadingMessage: 'Please wait while we create your account.'
+    });
+
+    try {
+        const result = await account.create(Appwrite.ID.unique(), email, password);
+        const sessionResult = await account.createEmailPasswordSession(email, password);
+
+        updateLoadingToast('createAccountEmailPassword', 'success', {
+            heading: 'Account Created Successfully',
+            message: 'Successfully Signed Up to your account.'
+        });
+
+        await sendEmailVerificationLink();
+        checkUser();
+    } catch (error) {
+        updateLoadingToast('createAccountEmailPassword', 'error', {
+            heading: 'Account Creation Failed',
+            message: error.message
+        });
+    }
+}
+
+/**
+ * Authenticates existing user with email/password
+ */
+async function authEmailPassword() {
+    const email = DOM.emailPassword.loginForm.email?.value.trim();
+    const password = DOM.emailPassword.loginForm.password?.value;
+
+    if (!validateEmailAndShowPassword(true)) return;
+    if (!password) {
+        DOM.emailPassword.loginForm.passwordContainer.style.display = 'block';
+        DOM.emailPassword.loginForm.password?.focus();
+        return;
+    }
+
+    showLoadingToast('authEmailPasswordToast', {
+        loadingHeading: 'Logging In..',
+        loadingMessage: 'Please wait while we log you in.'
+    });
+
+    try {
+        const result = await account.createEmailPasswordSession(email, password);
+        updateLoadingToast('authEmailPasswordToast', 'success', {
+            heading: 'Session Created',
+            message: 'Successfully Signed In to your account.'
+        });
+        checkUser();
+    } catch (error) {
+        updateLoadingToast('authEmailPasswordToast', 'error', {
+            heading: 'Sign In Failed',
+            message: error.message
+        });
+    }
+}
+
+/**
+ * Password Recovery and Reset
+ */
+async function resetPasswordRequest(emailInput) {
+    if (!emailInput) return;
+
+    try {
+        await account.createRecovery(
+            emailInput,
+            `${PROJECT_DOMAIN}/auth/api/reset-password.html`
+        );
+
+        showToast({ 
+            heading: 'Recovery email sent.',
+            message: 'Check your email to reset your password.',
+            type: 'success',
+            duration: 5500 
+        });
+
+        await delay(1000);
+
+        // Update modal UI
+        if (DOM.recovery.modal.header && DOM.recovery.modal.description && DOM.recovery.modal.button) {
+            DOM.recovery.modal.header.innerText = 'Recovery Email Sent';
+            DOM.recovery.modal.description.innerText = 'Check your email to reset your password.';
+            DOM.recovery.modal.button.disabled = true;
+            DOM.recovery.modal.button.innerText = 'Email Sent';
+        }
+    } catch (error) {
+        showToast({ 
+            heading: 'Recovery email failed.',
+            message: error.message,
+            duration: 3000,
+            type: 'error'
+        });
+        await delay(4000);
+        window.location.href = '/';
+    }
+}
+
+/**
+ * Handles password recovery confirmation
+ */
+function confirmPasswordRecovery() {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const secret = urlParams.get('secret');
+
+    if (!userId || !secret) {
+        console.error('Missing userId or secret in the URL');
+        return;
+    }
+
+    (async () => {
+        try {
+            if (!DOM.recovery.password) return;
+
+            await account.updateRecovery(
+                userId,
+                secret,
+                DOM.recovery.password.value
+            );
+
+            showToast({ 
+                heading: 'Password Changed',
+                message: 'Successfully changed the account password',
+                duration: 3000,
+                type: 'success'
+            });
+
+            // Optional: Redirect to login page after successful password reset
+            setTimeout(() => window.location.href = '/login', AUTH_REDIRECT_DELAY);
+        } catch (error) {
+            console.error('Error updating password:', error);
+            showToast({ 
+                heading: 'Password Change Failed',
+                message: error.message,
+                duration: 3000,
+                type: 'error'
+            });
+        }
+    })();
+}
+
+/**
+ * Email Verification
+ */
+async function sendEmailVerificationLink() {
+    try {
+        await account.createVerification(`${PROJECT_DOMAIN}/auth/api/verify.html`);
+        showToast({ 
+            heading: 'Verification email sent',
+            message: 'Check your email to verify your account.',
+            duration: 2000
+        });
+    } catch (error) {
+        showToast({ 
+            heading: 'Verification email failed.',
+            message: error.message,
+            duration: 3000
+        });
+    }
+}
+
+// Handle email verification callback
+if (window.location.pathname.includes('/auth/api/verify')) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const userId = urlParams.get('userId');
+    const secret = urlParams.get('secret');
+
+    if (userId && secret) {
+        (async () => {
+            try {
+                await account.updateVerification(userId, secret);
+                
+                if (DOM.verification.title && DOM.verification.body) {
+                    DOM.verification.title.innerText = 'Account Verified!';
+                    DOM.verification.body.innerText = 'Your email has been successfully verified.';
+                }
+
+                // Optional: Redirect to dashboard after delay
+                setTimeout(() => window.location.href = '/dashboard', AUTH_REDIRECT_DELAY);
+            } catch (error) {
+                console.error('Error verifying account:', error);
+                
+                if (DOM.verification.title && DOM.verification.body) {
+                    DOM.verification.title.innerText = 'Verification Failed!';
+                    DOM.verification.body.innerText = error.message;
+                }
+            }
+        })();
+    } else {
+        console.error('Missing userId or secret in the URL');
+        
+        if (DOM.verification.title && DOM.verification.body) {
+            DOM.verification.title.innerText = 'Verification Failed!';
+            DOM.verification.body.innerText = 'Missing verification parameters';
+        }
+    }
+}
 
 
 
+///////////////////////////////////////////////////
+
+document.addEventListener('DOMContentLoaded', () => {
+    toggleAuthDisplay(new URLSearchParams(window.location.search).get('auth'));
+});
+
+function toggleAuthDisplay(auth) {
+    const signUp = document.getElementById('authPasswordSignUp');
+    const logIn = document.getElementById('authPasswordLogIn');
+    if (signUp && logIn) {
+        [signUp.style.display, logIn.style.display] = auth === 'signup' ? ['block', 'none'] : ['none', 'block'];
+    }
+}
+
+function switchAuthPasswordType() {
+    const signUp = document.getElementById('authPasswordSignUp');
+    if (signUp) {
+        toggleAuthDisplay(signUp.style.display === 'none' ? 'signup' : 'login');
+    }
 }
